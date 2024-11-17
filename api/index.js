@@ -95,10 +95,30 @@ app.post("/register", async (req, res) => {
 
 io.on("connection", (socket) => {
   console.log("a user connected");
+  const cookies = socket.request.headers.cookie;
+  if (cookies) {
+    const tokencookiestring = cookies
+      .split(";")
+      .find((str) => str.startsWith("token="));
+    if (tokencookiestring) {
+      const token = tokencookiestring.split("=")[1];
+      if (token) {
+        jwt.verify(token, jwtSecret, {}, (err, userData) => {
+          if (err) throw err;
+          const { userId, username } = userData;
+          socket.userId = userId;
+          socket.username = username;
+        });
+      }
+    }
+  }
+  const onlineUsers = [...io.sockets.sockets.values()].map(socket => ({
+    userId: socket.userId,
+    username: socket.username
+}));
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  });
+
+io.emit('onlineUsers', onlineUsers);
 });
 
 server.listen(4000);
