@@ -59,8 +59,13 @@ app.get("/messages/:userId", async (req, res) => {
   const messages = await Message.find({
     sender: { $in: [userId, ourUserId] },
     recipient: { $in: [userId, ourUserId] },
-  }).sort({createdAt : 1});
+  }).sort({ createdAt: 1 });
   res.json(messages);
+});
+
+app.get("/people", async (req, res) => {
+  const users = await User.find({}, { _id: 1, username: 1 });
+  res.json(users);
 });
 
 app.get("/profile", (req, res) => {
@@ -95,6 +100,10 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post('/logout', (req,res) => {
+  res.cookie('token', '', {sameSite:'none', secure:true}).json('ok');
+});
+
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -120,7 +129,20 @@ app.post("/register", async (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  const notifyAboutOnlinePeople = () => {
+    const onlineUsers = [...io.sockets.sockets.values()].map((socket) => ({
+      userId: socket.userId,
+      username: socket.username,
+    }));
+
+    io.emit("onlineUsers", onlineUsers);
+  };
+
+  socket.on("disconnect", () => {
+    notifyAboutOnlinePeople();
+    console.log("Client disconnected");
+  });
+
   const cookies = socket.request.headers.cookie;
   if (cookies) {
     const tokencookiestring = cookies
@@ -154,19 +176,13 @@ io.on("connection", (socket) => {
             text,
             sender: socket.userId,
             recipient: recipient,
-            id: messageDoc._id,
+            _id: messageDoc._id,
           })
         );
-      
     }
   });
 
-  const onlineUsers = [...io.sockets.sockets.values()].map((socket) => ({
-    userId: socket.userId,
-    username: socket.username,
-  }));
-
-  io.emit("onlineUsers", onlineUsers);
+  notifyAboutOnlinePeople();
 });
 
 server.listen(4000);
