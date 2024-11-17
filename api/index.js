@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
+const Message = require("./models/Message");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -112,13 +113,35 @@ io.on("connection", (socket) => {
       }
     }
   }
-  const onlineUsers = [...io.sockets.sockets.values()].map(socket => ({
+
+  socket.on("sendMessage", async (data) => {
+    const { recipient, text } = data;
+    if (recipient && text) {
+      const messageDoc = await Message.create({
+        sender: socket.userId,
+        recipient: recipient,
+        text: text,
+      });
+      [...io.sockets.sockets.values()]
+        .filter((c) => c.userId === recipient)
+        .forEach((c) =>
+          c.emit("message", {
+            text,
+            sender: socket.userId,
+            recipient: recipient,
+            id: messageDoc._id,
+          })
+        );
+      console.log("Message sent:", text);
+    }
+  });
+
+  const onlineUsers = [...io.sockets.sockets.values()].map((socket) => ({
     userId: socket.userId,
-    username: socket.username
-}));
+    username: socket.username,
+  }));
 
-
-io.emit('onlineUsers', onlineUsers);
+  io.emit("onlineUsers", onlineUsers);
 });
 
 server.listen(4000);
