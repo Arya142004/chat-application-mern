@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import Avatar from "./Avatar";
 import { UserContext } from "./UserContext";
+import axios from "axios";
 
 export default function Chat() {
   const [socket, setSocket] = useState(null);
@@ -10,6 +11,7 @@ export default function Chat() {
   const [newMessageText, setnewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const { username, id } = useContext(UserContext);
+  const divundermessages = useRef();
 
   useEffect(() => {
     const newSocket = io("http://localhost:4000", {
@@ -54,19 +56,33 @@ export default function Chat() {
       text: newMessageText,
     };
     socket.emit("sendMessage", data);
+    setnewMessageText("");
     setMessages((prev) => [
       ...prev,
       { text: data.text, sender: id, recipient: selectedUserId },
     ]);
-    setnewMessageText("");
   }
+
+  useEffect(() => {
+    const div = divundermessages.current;
+    if (div) {
+      div.scrollIntoView({ behaviour: "smooth", block: "end" });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      axios.get("/messages/" + selectedUserId).then((res) => {
+        setMessages(res.data);
+      });
+    }
+  }, [selectedUserId]);
 
   const onlinePeopleExcOurplp = { ...onlinePeople };
   delete onlinePeopleExcOurplp[id];
 
   return (
     <div className="flex h-screen bg-gray-100">
-     
       <div className="bg-gray-50 w-1/3 border-r border-gray-200">
         <div className="text-gray-900 font-bold text-xl p-4 border-b border-gray-200">
           Chats
@@ -89,7 +105,6 @@ export default function Chat() {
         </div>
       </div>
 
-      
       <div className="flex flex-col w-2/3 bg-white">
         <div className="flex-grow p-4 overflow-y-auto">
           {!selectedUserId && (
@@ -111,6 +126,7 @@ export default function Chat() {
                   {message.text}
                 </div>
               ))}
+              <div ref={divundermessages}></div>
             </div>
           )}
         </div>
