@@ -185,4 +185,4 @@ io.on("connection", (socket) => {
   notifyAboutOnlinePeople();
 });
 
-server.listen(4000);
+server.listen(process.env.PORT);
