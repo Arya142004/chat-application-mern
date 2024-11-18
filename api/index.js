@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://gorgeous-cajeta-0da095.netlify.app",
+    origin: "*",  // Allow all origins
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -30,7 +30,7 @@ app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: process.env.CLIENT_URL,
+    origin: "*",
   })
 );
 
