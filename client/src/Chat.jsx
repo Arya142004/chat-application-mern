@@ -25,7 +25,7 @@ export default function Chat() {
 
   // Keeping all the existing useEffect hooks and functions the same
   useEffect(() => {
-    const newSocket = io("https://arya-mern-chat.onrender.com", {
+    const newSocket = io(import.meta.env.VITE_BACKEND_URL, {
       withCredentials: true,
     });
     setSocket(newSocket);
