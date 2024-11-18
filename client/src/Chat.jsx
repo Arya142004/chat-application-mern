@@ -23,7 +23,6 @@ export default function Chat() {
   const { username, id, setUsername, setId } = useContext(UserContext);
   const divundermessages = useRef();
 
-  // Keeping all the existing useEffect hooks and functions the same
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_BACKEND_URL, {
       withCredentials: true,
@@ -61,7 +60,13 @@ export default function Chat() {
 
   function handleMessage(messageData) {
     console.log("Received message:", messageData);
-    setMessages((prev) => [...prev, { ...messageData }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...messageData,
+        createdAt: messageData.createdAt || new Date().toISOString(),
+      },
+    ]);
     setnewMessageText("");
   }
 
@@ -77,7 +82,12 @@ export default function Chat() {
     setnewMessageText("");
     setMessages((prev) => [
       ...prev,
-      { text: data.text, sender: id, recipient: selectedUserId },
+      {
+        text: data.text,
+        sender: id,
+        recipient: selectedUserId,
+        createdAt: new Date().toISOString(),
+      },
     ]);
   }
 
@@ -114,7 +124,6 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
       <div className="bg-white w-1/3 flex flex-col border-r border-gray-300 shadow-lg">
         <div className="p-4 border-b border-gray-300 flex items-center gap-3">
           <MessageCircle className="w-6 h-6 text-blue-500" />
@@ -161,7 +170,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Chat Area */}
       <div className="flex flex-col w-2/3 bg-gray-50">
         {!selectedUserId && (
           <div className="flex-grow flex items-center justify-center">
@@ -179,18 +187,31 @@ export default function Chat() {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${
-                      message.sender === id ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex flex-col ${
+                      message.sender === id ? "items-end" : "items-start"
+                    } mb-3`}
                   >
                     <div
-                      className={`max-w-[70%] px-4 py-2 rounded-xl shadow-sm ${
+                      className={`max-w-[70%] px-4 py-2 rounded-xl shadow-sm relative ${
                         message.sender === id
                           ? "bg-blue-500 text-white"
                           : "bg-white text-gray-800"
                       }`}
                     >
-                      {message.text}
+                      <div className="pr-12">{message.text}</div>
+                      <div
+                        className={`absolute bottom-1 right-2 text-xs ${
+                          message.sender === id
+                            ? "text-blue-200"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -221,6 +242,6 @@ export default function Chat() {
           </>
         )}
       </div>
-    </div>  
+    </div>
   );
 }

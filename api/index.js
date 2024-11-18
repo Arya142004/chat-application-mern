@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,  // Allow all origins
+    origin: process.env.CLIENT_URL,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -190,6 +190,7 @@ io.on("connection", (socket) => {
             sender: socket.userId,
             recipient: recipient,
             _id: messageDoc._id,
+            createdAt: messageDoc.createdAt,
           })
         );
     }
