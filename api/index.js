@@ -19,7 +19,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: "https://gorgeous-cajeta-0da095.netlify.app",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -48,7 +48,7 @@ async function getUserDataFromRequest(req) {
   });
 }
 
-app.get("/", (req, res) => {
+app.get("/test", (req, res) => {
   res.json("test-ok");
 });
 
@@ -91,17 +91,23 @@ app.post("/login", async (req, res) => {
         jwtSecret,
         {},
         (err, token) => {
-          res.cookie("token", token).json({
-            id: foundUser._id,
-          });
+          res
+            .cookie("token", token, {
+              sameSite: "none",
+              secure: true,
+              path: "/",
+            })
+            .json({
+              id: foundUser._id,
+            });
         }
       );
     }
   }
 });
 
-app.post('/logout', (req,res) => {
-  res.cookie('token', '', {sameSite:'none', secure:true}).json('ok');
+app.post("/logout", (req, res) => {
+  res.cookie("token", "", { sameSite: "none", secure: true }).json("ok");
 });
 
 app.post("/register", async (req, res) => {
@@ -118,9 +124,16 @@ app.post("/register", async (req, res) => {
       {},
       (err, token) => {
         if (err) throw err;
-        res.cookie("token", token).status(201).json({
-          id: createdUser._id,
-        });
+        res
+          .cookie("token", token, {
+            sameSite: "none",
+            secure: true,
+            path: "/",
+          })
+          .status(201)
+          .json({
+            id: createdUser._id,
+          });
       }
     );
   } catch (error) {
